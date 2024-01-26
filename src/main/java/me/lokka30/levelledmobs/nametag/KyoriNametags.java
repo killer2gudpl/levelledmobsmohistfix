@@ -20,18 +20,20 @@ public class KyoriNametags {
     ) {
 
         final String nametag = nametagResult.getNametagNonNull();
-        final String mobKey = livingEntity.getType().translationKey();
+        //final String mobKey = livingEntity.getType().translationKey();
         final Definitions def = LevelledMobs.getInstance().getDefinitions();
 
         // this component holds the component of the mob name and will show the translated name on clients
         net.kyori.adventure.text.Component mobNameComponent;
         if (nametagResult.overriddenName == null){
-            if (def.useTranslationComponents){
-                mobNameComponent = net.kyori.adventure.text.Component.translatable(mobKey);
-            }
-            else{
-                mobNameComponent = net.kyori.adventure.text.Component.text(livingEntity.getName());
-            }
+            //if (def.useTranslationComponents){
+               // mobNameComponent = net.kyori.adventure.text.Component.translatable(mobKey);
+            //}
+           // else//{
+                String entityStr = livingEntity.getType().getKey().getKey();
+                String entityNameToBeDone = Character.toUpperCase(entityStr.charAt(0)) + entityStr.substring(1);
+                mobNameComponent = net.kyori.adventure.text.Component.text(entityNameToBeDone);
+            //}
         }
         else{
             mobNameComponent = LegacyComponentSerializer
