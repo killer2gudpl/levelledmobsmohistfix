@@ -10,30 +10,41 @@ import org.bukkit.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author PenalBuffalo (aka stumper66)
+ * Holds logic used to send nametags using Kyori
+ * which is usually only found on Paper servers
+ *
+ * @author stumper66
+ * @since 3.9.3
  */
 public class KyoriNametags {
 
     public static @NotNull Object generateComponent(
-            final @NotNull LivingEntity livingEntity,
-            final @NotNull NametagResult nametagResult
+        final @NotNull LivingEntity livingEntity,
+        final @NotNull NametagResult nametagResult
     ) {
+
         final String nametag = nametagResult.getNametagNonNull();
         final Definitions def = LevelledMobs.getInstance().getDefinitions();
 
-        // This component holds the component of the mob name and will show the translated name on clients
         net.kyori.adventure.text.Component mobNameComponent;
-        if (nametagResult.overriddenName == null) {
+        if (nametagResult.overriddenName == null){
             String entityStr = livingEntity.getType().getKey().getKey();
-            String entityNameToBeDone = formatEntityName(entityStr);
-            mobNameComponent = net.kyori.adventure.text.Component.text(entityNameToBeDone);
-        } else {
+            String[] parts = entityStr.split("_");
+
+            for (int i = 0; i < parts.length; i++) {
+                parts[i] = Character.toUpperCase(parts[i].charAt(0)) + parts[i].substring(1);
+            }
+
+            String formattedEntityName = String.join(" ", parts);
+            mobNameComponent = net.kyori.adventure.text.Component.text(formattedEntityName);
+        }
+        else{
             mobNameComponent = LegacyComponentSerializer
                     .legacyAmpersand()
                     .deserialize(nametagResult.overriddenName);
         }
 
-        // Replace placeholders and set the new death message
+        // replace placeholders and set the new death message
         Component result;
         if (def.getUseLegacySerializer()) {
             result = LegacyComponentSerializer
@@ -44,7 +55,9 @@ public class KyoriNametags {
                                     .matchLiteral("{DisplayName}")
                                     .replacement(mobNameComponent).build()
                     );
-        } else {
+        }
+        else{
+            //Utils.logger.info("Using MiniMessage");
             result = def.mm
                     .deserialize(nametag)
                     .replaceText(
@@ -54,6 +67,7 @@ public class KyoriNametags {
                     );
         }
 
+        // PaperAdventure.asVanilla(kyoriComponent)
         try {
             return def.method_AsVanilla.invoke(def.clazz_PaperAdventure, result);
         } catch (final Exception ex) {
@@ -63,19 +77,11 @@ public class KyoriNametags {
         return ComponentUtils.getEmptyComponent();
     }
 
-    // Add a helper method to format entity names with capitalization
-    private static String formatEntityName(String entityStr) {
-        String[] parts = entityStr.split("_");
-        for (int i = 0; i < parts.length; i++) {
-            parts[i] = Character.toUpperCase(parts[i].charAt(0)) + parts[i].substring(1);
-        }
-        return String.join(" ", parts);
-    }
-
     public static @NotNull Component generateDeathMessage(
             final @NotNull String mobKey,
             final @NotNull NametagResult nametagResult
     ) {
+
         final LivingEntityWrapper lmEntity = LivingEntityWrapper.getInstance(nametagResult.killerMob, LevelledMobs.getInstance());
         final String nametag = LevelledMobs.getInstance().levelManager.replaceStringPlaceholders(
                 nametagResult.getcustomDeathMessage(), lmEntity, false, null, true);
@@ -83,17 +89,18 @@ public class KyoriNametags {
 
         final Definitions def = LevelledMobs.getInstance().getDefinitions();
 
-        // This component holds the component of the mob name and will show the translated name on clients
+        // this component holds the component of the mob name and will show the translated name on clients
         net.kyori.adventure.text.Component mobNameComponent;
-        if (nametagResult.overriddenName == null) {
+        if (nametagResult.overriddenName == null){
             mobNameComponent = net.kyori.adventure.text.Component.translatable(mobKey);
-        } else {
+        }
+        else{
             mobNameComponent = LegacyComponentSerializer
                     .legacyAmpersand()
                     .deserialize(nametagResult.overriddenName);
         }
 
-        // Replace placeholders and set the new death message
+        // replace placeholders and set the new death message
         Component result;
         if (def.getUseLegacySerializer()) {
             result = LegacyComponentSerializer
@@ -104,7 +111,9 @@ public class KyoriNametags {
                                     .matchLiteral("{DisplayName}")
                                     .replacement(mobNameComponent).build()
                     );
-        } else {
+        }
+        else{
+            //Utils.logger.info("Using MiniMessage");
             result = def.mm
                     .deserialize(nametag)
                     .replaceText(

@@ -129,11 +129,15 @@ public class RulesParsingManager {
     }
 
     public @NotNull List<RuleInfo> getAllRules() {
+        return getAllRules(true);
+    }
+
+    public @NotNull List<RuleInfo> getAllRules(final boolean includePresets) {
         final List<RuleInfo> results = new LinkedList<>();
         if (this.defaultRule != null) {
             results.add(this.defaultRule);
         }
-        results.addAll(this.rulePresets.values());
+        if (includePresets) results.addAll(this.rulePresets.values());
         results.addAll(this.customRules);
 
         return results;
@@ -1417,6 +1421,8 @@ public class RulesParsingManager {
                     attribs.useStacked = ymlHelper.getBoolean2(cs, item, attribs.useStacked);
                 case "do-not-merge" ->
                     attribs.doNotMerge = ymlHelper.getBoolean(cs, item, false);
+                case "merge" ->
+                        attribs.doNotMerge = !ymlHelper.getBoolean(cs, item, true);
                 case "vanilla-bonus", "custom-mob-level" -> { }
                 default -> {
                     LMMultiplier lmMultiplier;

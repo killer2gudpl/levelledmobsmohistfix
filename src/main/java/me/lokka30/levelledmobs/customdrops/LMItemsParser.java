@@ -5,6 +5,7 @@ import io.github.stumper66.lm_items.GetItemResult;
 import io.github.stumper66.lm_items.ItemsAPI;
 import io.github.stumper66.lm_items.LM_Items;
 import me.lokka30.levelledmobs.LevelledMobs;
+import me.lokka30.levelledmobs.managers.DebugManager;
 import me.lokka30.levelledmobs.managers.ExternalCompatibilityManager;
 import me.lokka30.levelledmobs.misc.DebugType;
 import me.lokka30.levelledmobs.util.Utils;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Hashtable;
+import java.util.List;
 
 /**
  * Interfaces with the plugin LM_Items so can custom items from 3rd party plugins can be used
@@ -77,6 +79,15 @@ public class LMItemsParser {
         itemRequest.itemType = item.externalType;
         itemRequest.amount = item.externalAmount;
 
+        if (main.companion.externalCompatibilityManager.doesLMIMeetVersionRequirement2()){
+            itemRequest.getMultipleItems = "-".equals(itemRequest.itemId);
+            itemRequest.minItems = item.minItems;
+            itemRequest.maxItems = item.maxItems;
+            itemRequest.allowedList = item.allowedList;
+            itemRequest.excludedList = item.excludedList;
+            itemRequest.isDebugEnabled = main.debugManager.isEnabled();
+        }
+
         if (item.externalExtras != null){
             itemRequest.extras = new Hashtable<>(item.externalExtras.size());
 
@@ -120,21 +131,33 @@ public class LMItemsParser {
                 return false;
             }
 
-            if (main.companion.debugsEnabled.contains(DebugType.CUSTOM_DROPS)) {
-                if (item.externalType == null) {
-                    Utils.logger.warning(String.format("custom item '%s:%s' returned a null item",
-                        item.externalPluginName, item.externalItemId));
-                } else {
-                    Utils.logger.warning(
-                        String.format("custom item '%s:%s' (%s) returned a null item",
-                            item.externalPluginName, item.externalItemId, item.externalType));
-                }
+            final String msg = item.externalType == null ?
+                    String.format("&4custom item '%s:%s' returned a null item&r",
+                            item.externalPluginName, item.externalItemId) :
+                    String.format("&4custom item '%s:%s' (%s) returned a null item&r",
+                            item.externalPluginName, item.externalItemId, item.externalType);
+
+            // on server startup show as warning message
+            // after reload show as debug
+
+            if (main.companion.hasFinishedLoading){
+                DebugManager.log(DebugType.CUSTOM_DROPS, () -> msg);
             }
+            else{
+                Utils.logger.warning(msg);
+            }
+
+            main.customDropsHandler.customDropsParser.invalidExternalItems.add(msg);
 
             return false;
         }
 
-        item.setItemStack(itemStack);
+        if (main.companion.externalCompatibilityManager.doesLMIMeetVersionRequirement2()){
+            item.setItemStacks((List<ItemStack>) result.itemStacks);
+        }
+        else{
+            item.setItemStack(itemStack);
+        }
 
         return true;
     }
