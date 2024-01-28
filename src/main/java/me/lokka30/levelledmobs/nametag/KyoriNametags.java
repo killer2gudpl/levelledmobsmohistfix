@@ -10,7 +10,11 @@ import org.bukkit.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author PenalBuffalo (aka stumper66)
+ * Holds logic used to send nametags using Kyori
+ * which is usually only found on Paper servers
+ *
+ * @author stumper66
+ * @since 3.9.3
  */
 public class KyoriNametags {
 
@@ -20,20 +24,19 @@ public class KyoriNametags {
     ) {
 
         final String nametag = nametagResult.getNametagNonNull();
-        //final String mobKey = livingEntity.getType().translationKey();
         final Definitions def = LevelledMobs.getInstance().getDefinitions();
 
-        // this component holds the component of the mob name and will show the translated name on clients
         net.kyori.adventure.text.Component mobNameComponent;
         if (nametagResult.overriddenName == null){
-            //if (def.useTranslationComponents){
-               // mobNameComponent = net.kyori.adventure.text.Component.translatable(mobKey);
-            //}
-           // else//{
-                String entityStr = livingEntity.getType().getKey().getKey();
-                String entityNameToBeDone = Character.toUpperCase(entityStr.charAt(0)) + entityStr.substring(1);
-                mobNameComponent = net.kyori.adventure.text.Component.text(entityNameToBeDone);
-            //}
+            String entityStr = livingEntity.getType().getKey().getKey();
+            String[] parts = entityStr.split("_");
+
+            for (int i = 0; i < parts.length; i++) {
+                parts[i] = Character.toUpperCase(parts[i].charAt(0)) + parts[i].substring(1);
+            }
+
+            String formattedEntityName = String.join(" ", parts);
+            mobNameComponent = net.kyori.adventure.text.Component.text(formattedEntityName);
         }
         else{
             mobNameComponent = LegacyComponentSerializer
